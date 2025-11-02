@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
-	"strconv"
 )
 
 const (
@@ -76,54 +76,54 @@ func main() {
 	}
 }
 func processStats(values []string) {
-    var stats [7]float64
-    for i, v := range values {
-        var err error
-        stats[i], err = strconv.ParseFloat(v, 64)
-        if err != nil {
-            fmt.Printf("Error parsing value at index %d: %v\n", i, v)
-            return
-        }
-    }
+	var stats [7]float64
+	for i, v := range values {
+		var err error
+		stats[i], err = strconv.ParseFloat(v, 64)
+		if err != nil {
+			fmt.Printf("Error parsing value at index %d: %v\n", i, v)
+			return
+		}
+	}
 
-    loadAvg := stats[0]
-    totalMemory := stats[1]
-    usedMemory := stats[2]
-    totalDisk := stats[3]
-    usedDisk := stats[4]
-    totalBandwidth := stats[5]
-    usedBandwidth := stats[6]
+	loadAvg := stats[0]
+	totalMemory := stats[1]
+	usedMemory := stats[2]
+	totalDisk := stats[3]
+	usedDisk := stats[4]
+	totalBandwidth := stats[5]
+	usedBandwidth := stats[6]
 
-    // Load Average
-    if loadAvg > loadAvgThreshold {
-        fmt.Printf("Load Average is too high: %.0f\n", loadAvg)
-    }
+	// Load Average
+	if loadAvg > loadAvgThreshold {
+		fmt.Printf("Load Average is too high: %.0f\n", loadAvg)
+	}
 
-    // Memory usage
-    if totalMemory > 0 {
-        memoryUsagePercent := (usedMemory / totalMemory) * 100
-        if memoryUsagePercent > memoryUsageThreshold {
-            fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsagePercent)
-        }
-    }
+	// Memory usage
+	if totalMemory > 0 {
+		memoryUsagePercent := (usedMemory / totalMemory) * 100
+		if memoryUsagePercent > memoryUsageThreshold {
+			fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsagePercent)
+		}
+	}
 
-    // Free disk space
-    freeDisk := totalDisk - usedDisk
-    if totalDisk > 0 {
-        diskUsagePercent := (usedDisk / totalDisk) * 100
-        if diskUsagePercent > diskUsageThreshold {
-            freeDiskMb := int64(freeDisk) / (1024 * 1024)
-            fmt.Printf("Free disk space is too low: %d Mb left\n", freeDiskMb)
-        }
-    }
+	// Free disk space
+	freeDisk := totalDisk - usedDisk
+	if totalDisk > 0 {
+		diskUsagePercent := (usedDisk / totalDisk) * 100
+		if diskUsagePercent > diskUsageThreshold {
+			freeDiskMb := int64(freeDisk) / (1024 * 1024)
+			fmt.Printf("Free disk space is too low: %d Mb left\n", freeDiskMb)
+		}
+	}
 
-    // Network bandwidth (в Мбит/с)
-    freeBandwidth := totalBandwidth - usedBandwidth
-    if totalBandwidth > 0 {
-        freeBandwidthMbps := (float64(freeBandwidth) / (1024.0 * 1024.0)) * 8
-        bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
-        if bandwidthUsagePercent > networkUsageThreshold {
-            fmt.Printf("Network bandwidth usage high: %.0f Mbit/s available\n", freeBandwidthMbps)
-        }
-    }
+	// Network bandwidth (в Мбит/с)
+	freeBandwidth := totalBandwidth - usedBandwidth
+	if totalBandwidth > 0 {
+		freeBandwidthMbps := (int(freeBandwidth) / (1024 * 1024))
+		bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
+		if bandwidthUsagePercent > networkUsageThreshold {
+			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", freeBandwidthMbps)
+		}
+	}
 }
