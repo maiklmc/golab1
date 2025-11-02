@@ -75,14 +75,13 @@ func main() {
 		time.Sleep(checkInterval)
 	}
 }
-
 func processStats(values []string) {
 	var stats [7]float64
 
 	for i, v := range values {
 		_, err := fmt.Sscanf(v, "%f", &stats[i])
 		if err != nil {
-			return // Если не удалось прочитать число — считаем данные некорректными
+			return
 		}
 	}
 
@@ -94,18 +93,18 @@ func processStats(values []string) {
 	totalBandwidth := stats[5]
 	usedBandwidth := stats[6]
 
-	// Проверка Load Average
+	// Load Average (целое число)
 	if loadAvg > loadAvgThreshold {
-		fmt.Printf("Load Average is too high: %.2f\n", loadAvg)
+		fmt.Printf("Load Average is too high: %.0f\n", loadAvg)
 	}
 
-	// Проверка использования памяти
+	// Memory usage (целое число процентов)
 	memoryUsagePercent := (usedMemory / totalMemory) * 100
 	if memoryUsagePercent > memoryUsageThreshold {
-		fmt.Printf("Memory usage too high: %.2f%%\n", memoryUsagePercent)
+		fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsagePercent)
 	}
 
-	// Проверка свободного дискового пространства
+	// Free disk space (целое число Mb)
 	freeDisk := totalDisk - usedDisk
 	freeDiskMb := freeDisk / (1024 * 1024)
 	diskUsagePercent := (usedDisk / totalDisk) * 100
@@ -113,11 +112,11 @@ func processStats(values []string) {
 		fmt.Printf("Free disk space is too low: %.0f Mb left\n", freeDiskMb)
 	}
 
-	// Проверка загруженности сети
+	// Network bandwidth (округление до целого Mbit/s)
 	freeBandwidth := totalBandwidth - usedBandwidth
-	freeBandwidthMbit := freeBandwidth * 8 / (1024 * 1024) // байты в секунду → мегабиты в секунду
+	freeBandwidthMbit := freeBandwidth * 8 / (1024 * 1024) // байты → Mbit
 	bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
 	if bandwidthUsagePercent > networkUsageThreshold {
-		fmt.Printf("Network bandwidth usage high: %.2f Mbit/s available\n", freeBandwidthMbit)
+		fmt.Printf("Network bandwidth usage high: %.0f Mbit/s available\n", freeBandwidthMbit)
 	}
 }
