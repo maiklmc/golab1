@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -101,7 +102,7 @@ func processStats(values []string) {
 
 	// Memory usage
 	if totalMemory > 0 {
-		memoryUsagePercent := int((usedMemory / totalMemory) * 100) // Округляем вниз
+		memoryUsagePercent := int(math.Round((usedMemory / totalMemory) * 100))
 		if memoryUsagePercent > memoryUsageThreshold {
 			fmt.Printf("Memory usage too high: %d%%\n", memoryUsagePercent)
 		}
@@ -120,7 +121,8 @@ func processStats(values []string) {
 	// Network bandwidth (в Мбит/с)
 	if totalBandwidth > 0 {
 		freeBandwidth := totalBandwidth - usedBandwidth
-		freeBandwidthMbps := int(float64(freeBandwidth) * 8.0 / (1024.0 * 1024.0))
+		// Если данные в мегабайтах:
+		freeBandwidthMbps := int(freeBandwidth * 8.0) // MB/s → Mbit/s
 		bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
 		if bandwidthUsagePercent > networkUsageThreshold {
 			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", freeBandwidthMbps)
