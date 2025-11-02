@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -32,7 +33,7 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-		}
+	}
 
 		// Читаем тело ответа
 		body, err := io.ReadAll(resp.Body)
@@ -45,7 +46,7 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-		}
+	}
 
 		// Проверяем статус HTTP
 		if resp.StatusCode != http.StatusOK {
@@ -55,7 +56,7 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-		}
+	}
 
 		// Сброс счётчика ошибок при успешном получении данных
 		errorCount = 0
@@ -69,12 +70,13 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-		}
+	}
 
 		processStats(values)
 		time.Sleep(checkInterval)
 	}
 }
+
 func processStats(values []string) {
 	var stats [7]float64
 	for i, v := range values {
@@ -91,39 +93,41 @@ func processStats(values []string) {
 	usedMemory := stats[2]
 	totalDisk := stats[3]
 	usedDisk := stats[4]
-	totalBandwidth := stats[5]
-	usedBandwidth := stats[6]
+	totalBandwidth := stats[5] // байты/сек
+	usedBandwidth := stats[6]  // байты/сек
 
-	// Load Average
+	// 1. Load Average
 	if loadAvg > loadAvgThreshold {
 		fmt.Printf("Load Average is too high: %.0f\n", loadAvg)
 	}
 
-	// Memory usage
+	// 2. Memory usage (с округлением до целого процента)
 	if totalMemory > 0 {
-		memoryUsagePercent := (usedMemory / totalMemory) * 100
+		memoryUsagePercent := math.Round((usedMemory / totalMemory) * 100)
 		if memoryUsagePercent > memoryUsageThreshold {
 			fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsagePercent)
 		}
 	}
 
-	// Free disk space
+	// 3. Free disk space
 	freeDisk := totalDisk - usedDisk
 	if totalDisk > 0 {
 		diskUsagePercent := (usedDisk / totalDisk) * 100
 		if diskUsagePercent > diskUsageThreshold {
-			freeDiskMb := int64(freeDisk) / (1024 * 1024)
+			freeDiskMb := int64(freeDisk) / (1024 * 1024) // байты → МБ
 			fmt.Printf("Free disk space is too low: %d Mb left\n", freeDiskMb)
 		}
 	}
 
-	// Network bandwidth (в Мбит/с)
-	freeBandwidth := totalBandwidth - usedBandwidth
+	// 4. Network bandwidth (перевод байтов в мегабиты)
+	freeBandwidthBytes := totalBandwidth - usedBandwidth
 	if totalBandwidth > 0 {
-		freeBandwidthMbps := (int(freeBandwidth) / (1024 * 1024))
+		// Переводим байты в мегабиты: ×8 бит/байт, ÷(1024²) бит/Мбит
+		freeBandwidthMbit := float64(freeBandwidthBytes) * 8.0 / (1024.0 * 1024.0)
 		bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
+
 		if bandwidthUsagePercent > networkUsageThreshold {
-			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", freeBandwidthMbps)
+			fmt.Printf("Network bandwidth usage high: %.0f Mbit/s available\n", freeBandwidthMbit)
 		}
 	}
 }
