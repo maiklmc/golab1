@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	serverURL          = "http://srv.msk01.gigacorp.local/_stats"
-	loadAvgThreshold   = 30.0
-	memoryUsageThreshold = 80.0 // %
-	diskUsageThreshold   = 90.0 // %
+	serverURL             = "http://srv.msk01.gigacorp.local/_stats"
+	loadAvgThreshold      = 30.0
+	memoryUsageThreshold  = 80.0 // %
+	diskUsageThreshold    = 90.0 // %
 	networkUsageThreshold = 90.0 // %
-	checkInterval      = 10 * time.Second
-	maxErrorCount      = 3
+	checkInterval         = 10 * time.Second
+	maxErrorCount         = 3
 )
 
 func main() {
@@ -36,7 +36,6 @@ func main() {
 		// Читаем тело ответа
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close() // Явно закрываем тело ответа сразу после чтения
-
 
 		if err != nil {
 			errorCount++
@@ -104,19 +103,19 @@ func processStats(values []string) {
 		fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsagePercent)
 	}
 
-	// Free disk space (целое число Mb)
+	// Free disk space (целое число Mb, без округления вверх)
 	freeDisk := totalDisk - usedDisk
-	freeDiskMb := freeDisk / (1024 * 1024)
+	freeDiskMb := int64(freeDisk) / (1024 * 1024) // приводим к int64 → обрезаем дробную часть
 	diskUsagePercent := (usedDisk / totalDisk) * 100
 	if diskUsagePercent > diskUsageThreshold {
-		fmt.Printf("Free disk space is too low: %.0f Mb left\n", freeDiskMb)
+		fmt.Printf("Free disk space is too low: %d Mb left\n", freeDiskMb)
 	}
 
-	// Network bandwidth (округление до целого Mbit/s)
+	// Network bandwidth (мегабайты в секунду, без *8)
 	freeBandwidth := totalBandwidth - usedBandwidth
-	freeBandwidthMbit := freeBandwidth * 8 / (1024 * 1024) // байты → Mbit
+	freeBandwidthMb := float64(freeBandwidth) / (1024.0 * 1024.0) // байты → мегабайты
 	bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
 	if bandwidthUsagePercent > networkUsageThreshold {
-		fmt.Printf("Network bandwidth usage high: %.0f Mbit/s available\n", freeBandwidthMbit)
+		fmt.Printf("Network bandwidth usage high: %.0f Mbit/s available\n", freeBandwidthMb)
 	}
 }
