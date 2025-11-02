@@ -101,9 +101,9 @@ func processStats(values []string) {
 
 	// Memory usage
 	if totalMemory > 0 {
-		memoryUsagePercent := (usedMemory / totalMemory) * 100
+		memoryUsagePercent := int((usedMemory / totalMemory) * 100) // Округляем вниз
 		if memoryUsagePercent > memoryUsageThreshold {
-			fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsagePercent)
+			fmt.Printf("Memory usage too high: %d%%\n", memoryUsagePercent)
 		}
 	}
 
@@ -118,9 +118,9 @@ func processStats(values []string) {
 	}
 
 	// Network bandwidth (в Мбит/с)
-	freeBandwidth := totalBandwidth - usedBandwidth
 	if totalBandwidth > 0 {
-		freeBandwidthMbps := int(freeBandwidth) * 8 / (1024 * 1024) // Исправлено: *8 для перевода в биты
+		freeBandwidth := totalBandwidth - usedBandwidth
+		freeBandwidthMbps := int(float64(freeBandwidth) * 8.0 / (1024.0 * 1024.0))
 		bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
 		if bandwidthUsagePercent > networkUsageThreshold {
 			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", freeBandwidthMbps)
