@@ -22,6 +22,7 @@ func main() {
 	errorCount := 0
 
 	for {
+		// Выполняем HTTP-запрос
 		resp, err := http.Get(serverURL)
 		if err != nil {
 			errorCount++
@@ -32,9 +33,12 @@ func main() {
 			continue
 		}
 
-		defer resp.Body.Close()
+		// Читаем тело ответа
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close() // Явно закрываем тело ответа сразу после чтения
 
-		if resp.StatusCode != http.StatusOK {
+
+		if err != nil {
 			errorCount++
 			if errorCount >= maxErrorCount {
 				fmt.Println("Unable to fetch server statistic")
@@ -43,8 +47,8 @@ func main() {
 			continue
 		}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
+		// Проверяем статус HTTP
+		if resp.StatusCode != http.StatusOK {
 			errorCount++
 			if errorCount >= maxErrorCount {
 				fmt.Println("Unable to fetch server statistic")
@@ -56,6 +60,7 @@ func main() {
 		// Сброс счётчика ошибок при успешном получении данных
 		errorCount = 0
 
+		// Разбираем данные
 		values := strings.Split(string(body), ",")
 		if len(values) != 7 {
 			errorCount++
