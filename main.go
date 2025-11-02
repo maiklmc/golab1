@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	serverURL             = "http://srv.msk01.gigacorp.local/_stats"
-	loadAvgThreshold      = 30
-	memoryUsageThreshold  = 80 // %
-	diskUsageThreshold    = 90 // %
+	serverURL            = "http://srv.msk01.gigacorp.local/_stats"
+	loadAvgThreshold     = 30
+	memoryUsageThreshold = 80 // %
+	diskUsageThreshold   = 90 // %
 	networkUsageThreshold = 90 // %
-	checkInterval         = 10 * time.Second
-	maxErrorCount         = 3
+	checkInterval        = 10 * time.Second
+	maxErrorCount       = 3
 )
 
 func main() {
@@ -55,10 +55,10 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-		}
+	}
 
 		// Сброс счётчика ошибок при успешном получении данных
-		errorCount = 0
+	errorCount = 0
 
 		// Разбираем данные
 		values := strings.Split(string(body), ",")
@@ -69,11 +69,11 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-		}
-
-		processStats(values)
-		time.Sleep(checkInterval)
 	}
+
+	processStats(values)
+	time.Sleep(checkInterval)
+}
 }
 
 func processStats(values []string) {
@@ -84,49 +84,57 @@ func processStats(values []string) {
 		if err != nil {
 			fmt.Printf("Error parsing value at index %d: %v\n", i, v)
 			return
-		}
 	}
+}
 
-	loadAvg := stats[0]
-	totalMemory := stats[1]
-	usedMemory := stats[2]
-	totalDisk := stats[3]
-	usedDisk := stats[4]
-	totalBandwidth := stats[5] // байты/сек
-	usedBandwidth := stats[6]  // байты/сек
+loadAvg := stats[0]
+totalMemory := stats[1]
+usedMemory := stats[2]
+totalDisk := stats[3]
+usedDisk := stats[4]
+totalBandwidth := stats[5] // байты/сек
+usedBandwidth := stats[6]  // байты/сек
 
-	// 1. Load Average
-	if loadAvg > loadAvgThreshold {
-		fmt.Printf("Load Average is too high: %d\n", loadAvg)
+// Срез для хранения всех предупреждений
+var alerts []string
+
+// 1. Load Average
+if loadAvg > loadAvgThreshold {
+	alerts = append(alerts, fmt.Sprintf("Load Average is too high: %d", loadAvg))
+}
+
+// 2. Memory usage (целочисленный расчёт процента)
+if totalMemory > 0 {
+	memoryUsagePercent := (usedMemory * 100) / totalMemory
+	if memoryUsagePercent > memoryUsageThreshold {
+		alerts = append(alerts, fmt.Sprintf("Memory usage too high: %d%%", memoryUsagePercent))
 	}
+}
 
-	// 2. Memory usage (целочисленный расчёт процента)
-	if totalMemory > 0 {
-		memoryUsagePercent := (usedMemory * 100) / totalMemory
-		if memoryUsagePercent > memoryUsageThreshold {
-			fmt.Printf("Memory usage too high: %d%%\n", memoryUsagePercent)
-		}
+// 3. Free disk space
+freeDisk := totalDisk - usedDisk
+if totalDisk > 0 {
+	diskUsagePercent := (usedDisk * 100) / totalDisk
+	if diskUsagePercent > diskUsageThreshold {
+		freeDiskMb := freeDisk / (1024 * 1024) // байты → МБ
+		alerts = append(alerts, fmt.Sprintf("Free disk space is too low: %d Mb left", freeDiskMb))
 	}
+}
 
-	// 3. Free disk space
-	freeDisk := totalDisk - usedDisk
-	if totalDisk > 0 {
-		diskUsagePercent := (usedDisk * 100) / totalDisk
-		if diskUsagePercent > diskUsageThreshold {
-			freeDiskMb := freeDisk / (1024 * 1024) // байты → МБ
-			fmt.Printf("Free disk space is too low: %d Mb left\n", freeDiskMb)
-		}
+// 4. Network bandwidth (исправленный расчёт под ожидания тестов)
+freeBandwidthBytes := totalBandwidth - usedBandwidth
+if totalBandwidth > 0 {
+	// Делим байты на 1_000_000 (не переводим в мегабиты)
+	freeBandwidthMbit := freeBandwidthBytes / 1_000_000
+	bandwidthUsagePercent := (usedBandwidth * 100) / totalBandwidth
+
+	if bandwidthUsagePercent > networkUsageThreshold {
+		alerts = append(alerts, fmt.Sprintf("Network bandwidth usage high: %d Mbit/s available", freeBandwidthMbit))
 	}
+}
 
-	// 4. Network bandwidth (исправленный расчёт под ожидания тестов)
-	freeBandwidthBytes := totalBandwidth - usedBandwidth
-	if totalBandwidth > 0 {
-		// Делим байты на 1_000_000 (не переводим в мегабиты)
-		freeBandwidthMbit := freeBandwidthBytes / 1_000_000
-		bandwidthUsagePercent := (usedBandwidth * 100) / totalBandwidth
-
-		if bandwidthUsagePercent > networkUsageThreshold {
-			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", freeBandwidthMbit)
-		}
-	}
+// Выводим все предупреждения (каждое с новой строки)
+for _, alert := range alerts {
+	fmt.Println(alert)
+}
 }
