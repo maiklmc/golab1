@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,7 +32,7 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-	}
+		}
 
 		// Читаем тело ответа
 		body, err := io.ReadAll(resp.Body)
@@ -46,7 +45,7 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-	}
+		}
 
 		// Проверяем статус HTTP
 		if resp.StatusCode != http.StatusOK {
@@ -56,7 +55,7 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-	}
+		}
 
 		// Сброс счётчика ошибок при успешном получении данных
 		errorCount = 0
@@ -70,7 +69,7 @@ func main() {
 			}
 			time.Sleep(checkInterval)
 			continue
-	}
+		}
 
 		processStats(values)
 		time.Sleep(checkInterval)
@@ -103,9 +102,9 @@ func processStats(values []string) {
 
 	// 2. Memory usage (с округлением до целого процента)
 	if totalMemory > 0 {
-		memoryUsagePercent := math.Round((usedMemory / totalMemory) * 100)
+		memoryUsagePercent := int((usedMemory / totalMemory) * 100)
 		if memoryUsagePercent > memoryUsageThreshold {
-			fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsagePercent)
+			fmt.Printf("Memory usage too high: %d%%\n", memoryUsagePercent)
 		}
 	}
 
@@ -123,7 +122,7 @@ func processStats(values []string) {
 	freeBandwidthBytes := totalBandwidth - usedBandwidth
 	if totalBandwidth > 0 {
 		// Переводим байты в мегабиты: ×8 бит/байт, ÷(1024²) бит/Мбит
-		freeBandwidthMbit := float64(freeBandwidthBytes) * 8.0 / (1024.0 * 1024.0)
+		freeBandwidthMbit := float64(freeBandwidthBytes) / (1024.0 * 1024.0)
 		bandwidthUsagePercent := (usedBandwidth / totalBandwidth) * 100
 
 		if bandwidthUsagePercent > networkUsageThreshold {
