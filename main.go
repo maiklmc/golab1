@@ -2,20 +2,20 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 )
 
 const (
-	serverURL             = "http://srv.msk01.gigacorp.local/_stats"
-	loadAvgThreshold      = 30.0
-	memoryUsageThreshold  = 80.0 // %
-	diskUsageThreshold    = 90.0 // %
+	serverURL          = "http://srv.msk01.gigacorp.local/_stats"
+	loadAvgThreshold   = 30.0
+	memoryUsageThreshold = 80.0 // %
+	diskUsageThreshold   = 90.0 // %
 	networkUsageThreshold = 90.0 // %
-	checkInterval         = 10 * time.Second
-	maxErrorCount         = 3
+	checkInterval      = 10 * time.Second
+	maxErrorCount      = 3
 )
 
 func main() {
@@ -43,7 +43,7 @@ func main() {
 			continue
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			errorCount++
 			if errorCount >= maxErrorCount {
